@@ -24,35 +24,44 @@ struct isl_class {
 	map<string, set<FunctionDecl *> > methods;
 	FunctionDecl *fn_to_str;
 	FunctionDecl *fn_free;
-
-	bool is_static(FunctionDecl *method);
-
-	void print(map<string, isl_class> &classes, set<string> &done);
-	void print_constructor(FunctionDecl *method);
-	void print_representation(const string &python_name);
-	void print_method_type(FunctionDecl *fd);
-	void print_method_types();
-	void print_method(FunctionDecl *method, vector<string> super);
-	void print_method_overload(FunctionDecl *method, vector<string> super);
-	void print_method(const string &fullname,
-		const set<FunctionDecl *> &methods, vector<string> super);
 };
 
-void die(const char *msg) __attribute__((noreturn));
-string drop_type_suffix(string name, FunctionDecl *method);
-vector<string> find_superclasses(RecordDecl *decl);
-bool is_overload(Decl *decl);
-bool is_constructor(Decl *decl);
-bool takes(Decl *decl);
-bool gives(Decl *decl);
-isl_class *method2class(map<string, isl_class> &classes, FunctionDecl *fd);
-bool is_isl_ctx(QualType type);
-bool first_arg_is_isl_ctx(FunctionDecl *fd);
-bool is_isl_type(QualType type);
-bool is_isl_bool(QualType type);
-bool is_string_type(QualType type);
-bool is_callback(QualType type);
-bool is_string(QualType type);
-string extract_type(QualType type);
+/* Base class for interface generators.
+ */
+class generator {
+protected:
+	map<string,isl_class> classes;
+	map<string, FunctionDecl *> functions_by_name;
+
+public:
+	generator(set<RecordDecl *> &exported_types,
+		set<FunctionDecl *> exported_functions,
+		set<FunctionDecl *> functions);
+
+	virtual void generate() = 0;
+	virtual ~generator() {};
+
+protected:
+	void print_class_header(const isl_class &clazz, const string &name,
+		const vector<string> &super);
+	string drop_type_suffix(string name, FunctionDecl *method);
+	void die(const char *msg) __attribute__((noreturn));
+	vector<string> find_superclasses(RecordDecl *decl);
+	bool is_overload(Decl *decl);
+	bool is_constructor(Decl *decl);
+	bool takes(Decl *decl);
+	bool gives(Decl *decl);
+	isl_class *method2class(map<string, isl_class> &classes,
+		FunctionDecl *fd);
+	bool is_isl_ctx(QualType type);
+	bool first_arg_is_isl_ctx(FunctionDecl *fd);
+	bool is_isl_type(QualType type);
+	bool is_isl_bool(QualType type);
+	bool is_string_type(QualType type);
+	bool is_callback(QualType type);
+	bool is_string(QualType type);
+	bool is_static(const isl_class &clazz, FunctionDecl *method);
+	string extract_type(QualType type);
+};
 
 #endif /* ISL_INTERFACE_GENERATOR_H */
