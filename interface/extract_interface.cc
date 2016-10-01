@@ -76,6 +76,7 @@
 #include "extract_interface.h"
 #include "generator.h"
 #include "python.h"
+#include "cpp.h"
 
 using namespace std;
 using namespace clang;
@@ -431,6 +432,9 @@ int main(int argc, char *argv[])
 	generator *gen = 0;
 	if (Language.compare("python") == 0)
 		gen = new python_generator(consumer.exported_types,
+			consumer.exported_functions, consumer.functions);
+	else if (Language.compare("cpp") == 0)
+		gen = new cpp_generator(consumer.exported_types,
 			consumer.exported_functions, consumer.functions);
 	else
 		cerr << "Language '" << Language << "' not recognized." << endl
