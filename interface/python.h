@@ -1,5 +1,4 @@
-#include <set>
-#include <clang/AST/Decl.h>
+#include "generator.h"
 
 using namespace std;
 using namespace clang;
