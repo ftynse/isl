@@ -119,6 +119,20 @@ private:
 	 */
 	void print_ptr(ostream &os, const isl_class &clazz);
 
+	/* Print declarations for class "clazz".
+	 */
+	void print_methods(ostream &os, const isl_class &clazz);
+
+	/* Print declarations for methods of name "fullname" in class "clazz".
+	 */
+	void print_method(ostream &os, const isl_class &clazz,
+		const string &fullname, const set<FunctionDecl *> &methods);
+
+	/* Print declarations for "method" in class "clazz".
+	 */
+	void print_method(ostream &os,
+		const isl_class &clazz, FunctionDecl *method);
+
 	/* Print all implementations to "os".
 	 */
 	void print_implementations(ostream &os);
@@ -157,6 +171,33 @@ private:
 	 */
 	void print_ptr_impl(ostream &os, const isl_class &clazz);
 
+	/* Print definitions for class "clazz".
+	 */
+	void print_methods_impl(ostream &os, const isl_class &clazz);
+
+	/* Print definitions for methods of name "fullname" in class "clazz".
+	 */
+	void print_method_impl(ostream &os, const isl_class &clazz,
+		const string &fullname, const set<FunctionDecl *> &methods);
+
+	/* Print definition for "method" in class "clazz".
+	 */
+	void print_method_impl(ostream &os, const isl_class &clazz,
+		FunctionDecl *method);
+
+	/* Print the header for "method" in class "clazz".
+	 *
+	 * Print the header as declaration if "is_declaration" is set,
+	 * otherwise print the header of a method definition.
+	 */
+	void print_method_header(ostream &os, const isl_class &clazz,
+		FunctionDecl *method, bool is_declaration);
+
+	/* Verify if the C++ generator can generate this type of method.
+	 *
+	 */
+	bool is_supported_method(const isl_class &clazz, FunctionDecl *method);
+
 	/* Translate the isl type name into its corresponding C++ type.
 	 *
 	 * To obtain the C++ type name, the 'isl_' prefix is removed and the
@@ -168,8 +209,10 @@ private:
 	string type2cpp(string name);
 
 	/* Convert a string "input" to CamelCase.
+	 *
+	 * If "start_lowercase" is set, the first letter remains lowercase.
 	 */
-	string to_camel_case(const string &input);
+	string to_camel_case(const string &input, bool start_lowercase = false);
 
 	/* Check if a given class "clazz" is supported by these bindings.
 	 *

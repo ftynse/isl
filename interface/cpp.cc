@@ -140,6 +140,7 @@ void cpp_generator::print_class(ostream &os, const isl_class &clazz)
 	print_copy_assignment(os, clazz);
 	print_destructor(os, clazz);
 	print_ptr(os, clazz);
+	print_methods(os, clazz);
 
 	fprintf(os, "};\n\n");
 }
@@ -208,6 +209,36 @@ void cpp_generator::print_ptr(ostream &os, const isl_class &clazz)
 	fprintf(os, "  inline bool isNull() const;\n");
 }
 
+void cpp_generator::print_methods(ostream &os, const isl_class &clazz)
+{
+	map<string, set<FunctionDecl *> >::const_iterator it;
+	for (it = clazz.methods.begin(); it != clazz.methods.end(); ++it)
+		print_method(os, clazz, it->first, it->second);
+}
+
+void cpp_generator::print_method(ostream &os, const isl_class &clazz,
+	const string &fullname, const set<FunctionDecl *> &methods)
+{
+	FunctionDecl *any_method;
+
+	any_method = *methods.begin();
+	if (methods.size() == 1 && !is_overload(any_method)) {
+		print_method(os, clazz, any_method);
+		return;
+	}
+
+	return;
+}
+
+void cpp_generator::print_method(ostream &os, const isl_class &clazz,
+	FunctionDecl *method)
+{
+	if (!is_supported_method(clazz, method))
+		return;
+
+	print_method_header(os, clazz, method, true /* is_declaration */);
+}
+
 void cpp_generator::print_class_impl(ostream &os, const isl_class &clazz)
 {
 	std::string cppstring = type2cpp(clazz.name);
@@ -224,6 +255,7 @@ void cpp_generator::print_class_impl(ostream &os, const isl_class &clazz)
 	print_copy_assignment_impl(os, clazz);
 	print_destructor_impl(os, clazz);
 	print_ptr_impl(os, clazz);
+	print_methods_impl(os, clazz);
 }
 
 void cpp_generator::print_class_global_constructor_impl(ostream &os,
@@ -309,10 +341,145 @@ void cpp_generator::print_ptr_impl(ostream &os, const isl_class &clazz)
 	fprintf(os, "}\n\n");
 }
 
-string cpp_generator::to_camel_case(const string &input)
+void cpp_generator::print_methods_impl(ostream &os, const isl_class &clazz)
+{
+	map<string, set<FunctionDecl *> >::const_iterator it;
+	for (it = clazz.methods.begin(); it != clazz.methods.end(); ++it)
+		print_method_impl(os, clazz, it->first, it->second);
+}
+
+void cpp_generator::print_method_impl(ostream &os, const isl_class &clazz,
+	const string &fullname, const set<FunctionDecl *> &methods)
+{
+	FunctionDecl *any_method;
+
+	any_method = *methods.begin();
+	if (methods.size() == 1 && !is_overload(any_method)) {
+		print_method_impl(os, clazz, any_method);
+		return;
+	}
+
+	return;
+}
+
+void cpp_generator::print_method_impl(ostream &os, const isl_class &clazz,
+	FunctionDecl *method)
+{
+	string fullname = method->getName();
+	string cname = fullname.substr(clazz.name.length() + 1);
+	int num_params = method->getNumParams();
+
+	if (!is_supported_method(clazz, method))
+		return;
+
+	print_method_header(os, clazz, method, false /* is_declaration */);
+
+	QualType return_type = method->getReturnType();
+	string rettype_str =
+		type2cpp(return_type->getPointeeType().getAsString());
+
+	fprintf(os, "   return manage(%s(", fullname.c_str());
+	for (int i = 0; i < num_params; ++i) {
+		ParmVarDecl *param = method->getParamDecl(i);
+
+		if (i == 0)
+			fprintf(os, "");
+		else
+			fprintf(os, "%s.", param->getName().str().c_str());
+
+		if (takes(param))
+			fprintf(os, "copy()");
+		else
+			fprintf(os, "get()");
+
+		if (i != num_params - 1)
+		  fprintf(os, ", ");
+	}
+	fprintf(os, "));\n");
+
+	fprintf(os, "}\n\n");
+}
+
+
+static const char *cpp_keywords[] = {
+  "union",
+};
+
+void cpp_generator::print_method_header(ostream &os, const isl_class &clazz,
+	FunctionDecl *method, bool is_declaration)
+{
+	string fullname = method->getName();
+	string cname = fullname.substr(clazz.name.length() + 1);
+	cname = to_camel_case(cname, true /* start_lowercase */);
+	int num_params = method->getNumParams();
+
+	QualType return_type = method->getReturnType();
+	string rettype_str =
+		type2cpp(return_type->getPointeeType().getAsString());
+	string classname = type2cpp(clazz.name);
+
+	if (is_declaration)
+		fprintf(os, "  inline %s %s(", rettype_str.c_str(),
+			cname.c_str());
+	else
+		fprintf(os, "%s %s::%s(", rettype_str.c_str(),
+			classname.c_str(), cname.c_str());
+
+	for (int i = 1; i < num_params; ++i) {
+		ParmVarDecl *param = method->getParamDecl(i);
+		QualType type = param->getOriginalType();
+		string cpptype = type2cpp(type->getPointeeType().getAsString());
+		fprintf(os, "const %s &%s", cpptype.c_str(),
+			param->getName().str().c_str());
+
+		if (i != num_params - 1)
+		  fprintf(os, ", ");
+	}
+	if (is_declaration)
+		fprintf(os, ") const;\n");
+	else
+		fprintf(os, ") const {\n");
+}
+
+bool cpp_generator::is_supported_method(const isl_class &clazz,
+	FunctionDecl *method) {
+	string fullname = method->getName();
+	string cname = fullname.substr(clazz.name.length() + 1);
+	int num_params = method->getNumParams();
+
+	if (first_arg_is_isl_ctx(method))
+		return false;
+
+	for (size_t i = 0; i < sizeof(cpp_keywords); i++)
+		if (cname.compare(cpp_keywords[i]) == 0)
+			return false;
+
+	if (is_static(clazz, method))
+		return false;
+
+	for (int i = 1; i < num_params; ++i) {
+		ParmVarDecl *param = method->getParamDecl(i);
+		QualType type = param->getOriginalType();
+		if (!is_isl_type(type))
+			return false;
+	}
+
+	QualType return_type = method->getReturnType();
+	if (!is_isl_type(return_type))
+		return false;
+
+	string rettype_str = return_type->getPointeeType().getAsString();
+
+	if (!is_supported_class(rettype_str))
+		return false;
+
+	return true;
+}
+
+string cpp_generator::to_camel_case(const string &input, bool start_lowercase)
 {
 	string output;
-	bool uppercase = true;
+	bool uppercase = !start_lowercase;
 
 	for (const char &character : input) {
 		if (character == '_') {
