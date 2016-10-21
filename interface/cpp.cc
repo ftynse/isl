@@ -137,6 +137,7 @@ void cpp_generator::print_class(ostream &os, const isl_class &clazz)
 	fprintf(os, "\n");
 	fprintf(os, "public:\n");
 	print_public_constructors(os, clazz);
+	print_conversion_constructors(os, clazz);
 	print_copy_assignment(os, clazz);
 	print_destructor(os, clazz);
 	print_ptr(os, clazz);
@@ -182,6 +183,29 @@ void cpp_generator::print_public_constructors(ostream &os,
 	const char *cppname = cppstring.c_str();
 	fprintf(os, "  inline %s();\n", cppname);
 	fprintf(os, "  inline %s(const %s &Obj);\n", cppname, cppname);
+}
+
+void cpp_generator::print_conversion_constructors(ostream &os,
+       const isl_class &clazz)
+{
+	set<FunctionDecl *>::const_iterator in;
+	std::string cppstring = type2cpp(clazz.name);
+	const char *cppname = cppstring.c_str();
+
+	for (in = clazz.constructors.begin(); in != clazz.constructors.end();
+		++in) {
+		auto cons = *in;
+		if (!is_supported_constructor(cons))
+			continue;
+		string fullname = cons->getName();
+		ParmVarDecl *param = cons->getParamDecl(0);
+		QualType type = param->getOriginalType();
+		std::string typestr = type->getPointeeType().getAsString();
+		std::string paramstring = type2cpp(typestr);
+		const char *paramname = paramstring.c_str();
+		fprintf(os, "  inline %s(%s Obj);\n",
+		cppname, paramname);
+	}
 }
 
 void cpp_generator::print_copy_assignment(ostream &os,
@@ -252,6 +276,7 @@ void cpp_generator::print_class_impl(ostream &os, const isl_class &clazz)
 	print_class_global_constructor_impl(os, clazz);
 	print_public_constructors_impl(os, clazz);
 	print_private_constructors_impl(os, clazz);
+	print_conversion_constructors_impl(os, clazz);
 	print_copy_assignment_impl(os, clazz);
 	print_destructor_impl(os, clazz);
 	print_ptr_impl(os, clazz);
@@ -290,6 +315,31 @@ void cpp_generator::print_public_constructors_impl(ostream &os,
 	fprintf(os, "%s::%s() : Ptr(nullptr) {}\n\n", cppname, cppname);
 	fprintf(os, "%s::%s(const %s &Obj) : Ptr(Obj.copy()) {}\n\n",
 		cppname, cppname, cppname, name);
+}
+
+void cpp_generator::print_conversion_constructors_impl(ostream &os,
+       const isl_class &clazz)
+{
+	set<FunctionDecl *>::const_iterator in;
+	std::string cppstring = type2cpp(clazz.name);
+	const char *cppname = cppstring.c_str();
+
+	for (in = clazz.constructors.begin(); in != clazz.constructors.end();
+		++in) {
+		auto cons = *in;
+		if (!is_supported_constructor(cons))
+			continue;
+		string fullname = cons->getName();
+		ParmVarDecl *param = cons->getParamDecl(0);
+		QualType type = param->getOriginalType();
+		std::string typestr = type->getPointeeType().getAsString();
+		std::string paramstring = type2cpp(typestr);
+		const char *paramname = paramstring.c_str();
+		fprintf(os, "%s::%s(%s Obj) {\n", cppname,
+			cppname, paramname);
+		fprintf(os, "  Ptr = %s(Obj.release());\n", fullname.c_str());
+		fprintf(os, "}\n\n");
+	}
 }
 
 void cpp_generator::print_copy_assignment_impl(ostream &os,
@@ -505,4 +555,20 @@ string cpp_generator::type2cpp(string name)
 bool cpp_generator::is_supported_class(string name)
 {
 	return true;
+}
+
+bool cpp_generator::is_supported_constructor(FunctionDecl *cons)
+{
+	int num_params = cons->getNumParams();
+	if (num_params != 1)
+		return false;
+
+	ParmVarDecl *param = cons->getParamDecl(0);
+	QualType type = param->getOriginalType();
+	std::string type_name = type->getPointeeType().getAsString();
+
+	if (type_name == "isl_ctx")
+		return false;
+
+	return is_isl_type(type);
 }
