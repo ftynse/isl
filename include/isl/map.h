@@ -53,6 +53,7 @@ unsigned isl_basic_map_dim(__isl_keep isl_basic_map *bmap,
 unsigned isl_map_n_in(const struct isl_map *map);
 unsigned isl_map_n_out(const struct isl_map *map);
 unsigned isl_map_n_param(const struct isl_map *map);
+__isl_export
 unsigned isl_map_dim(__isl_keep isl_map *map, enum isl_dim_type type);
 
 isl_ctx *isl_basic_map_get_ctx(__isl_keep isl_basic_map *bmap);
@@ -278,6 +279,7 @@ struct isl_basic_map *isl_map_copy_basic_map(struct isl_map *map);
 __isl_give isl_map *isl_map_drop_basic_map(__isl_take isl_map *map,
 						__isl_keep isl_basic_map *bmap);
 
+__isl_export
 __isl_give isl_val *isl_basic_map_plain_get_val_if_fixed(
 	__isl_keep isl_basic_map *bmap,
 	enum isl_dim_type type, unsigned pos);
@@ -428,9 +430,11 @@ __isl_give isl_basic_map *isl_basic_map_move_dims(
 __isl_give isl_map *isl_map_move_dims(__isl_take isl_map *map,
 	enum isl_dim_type dst_type, unsigned dst_pos,
 	enum isl_dim_type src_type, unsigned src_pos, unsigned n);
+__isl_export
 __isl_give isl_basic_map *isl_basic_map_project_out(
 		__isl_take isl_basic_map *bmap,
 		enum isl_dim_type type, unsigned first, unsigned n);
+__isl_export
 __isl_give isl_map *isl_map_project_out(__isl_take isl_map *map,
 		enum isl_dim_type type, unsigned first, unsigned n);
 __isl_give isl_basic_map *isl_basic_map_remove_divs(
@@ -672,7 +676,9 @@ __isl_give isl_basic_map *isl_basic_map_from_aff_list(
 __isl_give isl_map *isl_map_from_aff(__isl_take isl_aff *aff);
 __isl_give isl_map *isl_map_from_multi_aff(__isl_take isl_multi_aff *maff);
 
+__isl_export
 __isl_give isl_pw_aff *isl_map_dim_min(__isl_take isl_map *map, int pos);
+__isl_export
 __isl_give isl_pw_aff *isl_map_dim_max(__isl_take isl_map *map, int pos);
 
 ISL_DECLARE_LIST_FN(basic_map)

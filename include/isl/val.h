@@ -75,6 +75,7 @@ __isl_export
 __isl_give isl_val *isl_val_max(__isl_take isl_val *v1, __isl_take isl_val *v2);
 __isl_export
 __isl_give isl_val *isl_val_add(__isl_take isl_val *v1, __isl_take isl_val *v2);
+__isl_export
 __isl_give isl_val *isl_val_add_ui(__isl_take isl_val *v1, unsigned long v2);
 __isl_export
 __isl_give isl_val *isl_val_sub(__isl_take isl_val *v1, __isl_take isl_val *v2);
