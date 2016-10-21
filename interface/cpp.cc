@@ -466,16 +466,22 @@ void cpp_generator::print_method_impl(ostream &os, const isl_class &clazz,
 
 	for (int i = 0; i < num_params; ++i) {
 		ParmVarDecl *param = method->getParamDecl(i);
+		QualType type = param->getOriginalType();
 
-		if (i == 0)
-			fprintf(os, "");
-		else
-			fprintf(os, "%s.", param->getName().str().c_str());
+		if (is_isl_type(type)) {
+			if (i == 0)
+				fprintf(os, "");
+			else
+				fprintf(os, "%s.",
+					param->getName().str().c_str());
 
-		if (takes(param))
-			fprintf(os, "copy()");
-		else
-			fprintf(os, "get()");
+			if (takes(param))
+				fprintf(os, "copy()");
+			else
+				fprintf(os, "get()");
+		} else {
+			fprintf(os, "%s", param->getName().str().c_str());
+		}
 
 		if (i != num_params - 1)
 		  fprintf(os, ", ");
@@ -527,8 +533,14 @@ void cpp_generator::print_method_header(ostream &os, const isl_class &clazz,
 		ParmVarDecl *param = method->getParamDecl(i);
 		QualType type = param->getOriginalType();
 		string cpptype = type2cpp(type->getPointeeType().getAsString());
-		fprintf(os, "const %s &%s", cpptype.c_str(),
-			param->getName().str().c_str());
+
+		if (is_isl_type(type))
+			fprintf(os, "const %s &%s", cpptype.c_str(),
+				param->getName().str().c_str());
+		else
+			fprintf(os, "%s %s",
+				type.getAsString().c_str(),
+				param->getName().str().c_str());
 
 		if (i != num_params - 1)
 		  fprintf(os, ", ");
@@ -558,8 +570,13 @@ bool cpp_generator::is_supported_method(const isl_class &clazz,
 	for (int i = 1; i < num_params; ++i) {
 		ParmVarDecl *param = method->getParamDecl(i);
 		QualType type = param->getOriginalType();
-		if (!is_isl_type(type))
-			return false;
+
+		if (is_isl_type(type))
+			continue;
+		if (type->isIntegerType())
+			continue;
+
+		return false;
 	}
 
 	QualType return_type = method->getReturnType();
