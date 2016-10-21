@@ -502,17 +502,7 @@ string cpp_generator::type2cpp(string name)
 	return to_camel_case(name.substr(4));
 }
 
-std::vector<const char*> supported_classes = {
-	"isl_set",
-	"isl_map",
-};
-
 bool cpp_generator::is_supported_class(string name)
 {
-	for (size_t i = 0; i < supported_classes.size(); i++) {
-		if (name == supported_classes[i])
-			return true;
-	}
-
-	return false;
+	return true;
 }
