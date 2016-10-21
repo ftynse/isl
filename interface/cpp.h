@@ -133,6 +133,11 @@ private:
 	 */
 	void print_ptr(ostream &os, const isl_class &clazz);
 
+	/* Print implementation of str() method for class "clazz" to "os",
+	 * if isl_*_to_str is available.
+	 */
+	void print_str(ostream &os, const isl_class &clazz);
+
 	/* Print declarations for class "clazz".
 	 */
 	void print_methods(ostream &os, const isl_class &clazz);
@@ -190,6 +195,11 @@ private:
 	/* Print implementation of ptr() function for class "clazz" to "os".
 	 */
 	void print_ptr_impl(ostream &os, const isl_class &clazz);
+
+	/* Print implementation of str() method for class "clazz" to "os",
+	 * if isl_*_to_str is available.
+	 */
+	void print_str_impl(ostream &os, const isl_class &clazz);
 
 	/* Print definitions for class "clazz".
 	 */
