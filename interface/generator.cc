@@ -81,10 +81,15 @@ generator::generator(set<RecordDecl *> &exported_types,
 		classes[name].type = decl;
 		classes[name].fn_to_str = NULL;
 		classes[name].fn_free = NULL;
+		classes[name].fn_get_ctx = NULL;
 
 		i = functions_by_name.find(name + "_to_str");
 		if (i != functions_by_name.end())
 			classes[name].fn_to_str = i->second;
+
+		i = functions_by_name.find(name + "_get_ctx");
+		if (i != functions_by_name.end())
+			classes[name].fn_get_ctx = i->second;
 
 		i = functions_by_name.find (name + "_free");
 		if (i == functions_by_name.end())

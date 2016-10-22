@@ -138,6 +138,11 @@ private:
 	 */
 	void print_str(ostream &os, const isl_class &clazz);
 
+	/* Print declaration of getCtx() method for class "clazz", if
+	 * isl_type_get_ctx() is available.
+	 */
+	void print_get_ctx(ostream &os, const isl_class &clazz);
+
 	/* Print declarations for class "clazz".
 	 */
 	void print_methods(ostream &os, const isl_class &clazz);
@@ -200,6 +205,11 @@ private:
 	 * if isl_*_to_str is available.
 	 */
 	void print_str_impl(ostream &os, const isl_class &clazz);
+
+	/* Print implementation of getCtx() method for class "clazz" to "os",
+	 * if isl_type_get_ctx() is available.
+	 */
+	void print_get_ctx_impl(ostream &os, const isl_class &clazz);
 
 	/* Print definitions for class "clazz".
 	 */

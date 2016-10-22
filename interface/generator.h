@@ -16,6 +16,7 @@ using namespace clang;
  * "methods" contains the set of methods, grouped by method name.
  * "fn_to_str" is a reference to the *_to_str method of this class, if any.
  * "fn_free" is a reference to the *_free method of this class, if any.
+ * "fn_get_ctx" is a reference to the *_get_ctx method of this class, if any.
  */
 struct isl_class {
 	string name;
@@ -24,6 +25,7 @@ struct isl_class {
 	map<string, set<FunctionDecl *> > methods;
 	FunctionDecl *fn_to_str;
 	FunctionDecl *fn_free;
+	FunctionDecl *fn_get_ctx;
 };
 
 /* Base class for interface generators.
