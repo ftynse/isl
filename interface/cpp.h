@@ -206,6 +206,11 @@ private:
 	 */
 	void print_str_impl(ostream &os, const isl_class &clazz);
 
+	/* Print operator<< for LLVM's raw_ostream implementation for class
+	 * "clazz" to "os".
+	 */
+	void print_raw_ostream_impl(ostream &os, const isl_class &clazz);
+
 	/* Print implementation of getCtx() method for class "clazz" to "os",
 	 * if isl_type_get_ctx() is available.
 	 */

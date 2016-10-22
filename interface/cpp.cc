@@ -300,6 +300,7 @@ void cpp_generator::print_class_impl(ostream &os, const isl_class &clazz)
 	print_destructor_impl(os, clazz);
 	print_ptr_impl(os, clazz);
 	print_str_impl(os, clazz);
+	print_raw_ostream_impl(os, clazz);
 	print_get_ctx_impl(os, clazz);
 	print_methods_impl(os, clazz);
 }
@@ -428,6 +429,21 @@ void cpp_generator::print_str_impl(ostream &os, const isl_class &clazz)
 	fprintf(os, "  std::string S(Tmp);\n");
 	fprintf(os, "  free(Tmp);\n");
 	fprintf(os, "  return Tmp;\n");
+	fprintf(os, "}\n\n");
+}
+
+void cpp_generator::print_raw_ostream_impl(ostream &os, const isl_class &clazz)
+{
+	if (!clazz.fn_to_str)
+		return;
+
+	std::string cppstring = type2cpp(clazz.name);
+	const char *cppname = cppstring.c_str();
+	fprintf(os, "inline ");
+	fprintf(os, "llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,\n");
+	fprintf(os, "  %s &Obj) {\n", cppname);
+	fprintf(os, "  OS << Obj.toStr();\n");
+	fprintf(os, "  return OS;\n");
 	fprintf(os, "}\n\n");
 }
 
